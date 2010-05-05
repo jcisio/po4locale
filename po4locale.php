@@ -21,6 +21,7 @@ $before = memory_get_usage();
 unset($T);
 $after = memory_get_usage();
 
+// this is WRONG. Need to find a way to translate only data in msgstr
 $data = file_get_contents('po/'. $LOCALE .'.po');
 $data = preg_replace_callback('#\\\\(application|menu|button|checkbox|tab|dropdown|window|textfield)\{([^\{]+?)\}#', 'po4local_replace', $data);
 rename('po/'. $LOCALE .'.po', 'po/'. $LOCALE .'.bak.po');
@@ -85,12 +86,20 @@ function po4local_item_replace($source = NULL) {
   if ($source == NULL) {
     return $total;
   }
-  
-  if (isset($T2[$source])) {
-    if ($source != $T2[$source]) $total++;
-    return $T2[$source];
+
+  if (substr($source, -1) == '.') {
+    $suffix = '.';
+    $source = substr($source, 0, -1);
   }
   else {
-    return $source;
+    $suffix = '';
+  }
+
+  if (isset($T2[$source])) {
+    if ($source != $T2[$source]) $total++;
+    return $T2[$source] . $suffix;
+  }
+  else {
+    return $source . $suffix;
   }
 }
