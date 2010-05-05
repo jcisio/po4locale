@@ -37,8 +37,8 @@ function parse_file($filename) {
     // we take care of only one line strings
     if (preg_match('/^msgid "(.+?)"\s*$/', $data[$k++], $mid)) {
       if (preg_match('/^msgstr "(.+?)"\s*$/', $data[$k++], $mstr)) {
-        $src = stripslashes($mid[1]);
-        $dst = stripslashes($mstr[1]);
+        $src = $mid[1];
+        $dst = $mstr[1];
         // no string that has more than 4 words is considered
         if (substr_count($src, ' ') > 3) {
           continue;
@@ -65,12 +65,12 @@ function max_key($array) {
 }
 
 function po4local_replace($match) {
-  $data = explode('\\then', $match[2]);
+  $data = explode('\\\\then', str_replace("\"\n\"", "", $match[2]));
   foreach ($data as $k => $text) {
     $data[$k] = po4local_item_replace(trim($text));
   }
   
-  $output = '\\'. $match[1] .'{'. implode('\\then ', $data) .'}';
+  $output = '\\'. $match[1] .'{'. implode('\\\\then ', $data) .'}';
   if ($output != $match[0]) {
     printf("Replace %s by %s\n", $match[0], $output);
   }
