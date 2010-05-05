@@ -71,8 +71,10 @@ function po4local_replace($match) {
   }
   
   $output = '\\'. $match[1] .'{'. implode('\\then ', $data) .'}';
-  if ($output != $match[0]) printf("Replace %s by %s\n", $match[0], $output);
-  
+  if ($output != $match[0]) {
+    printf("Replace %s by %s\n", $match[0], $output);
+  }
+
   return $output;
 }
 
