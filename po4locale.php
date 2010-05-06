@@ -21,13 +21,11 @@ $before = memory_get_usage();
 unset($T);
 $after = memory_get_usage();
 
-// this is WRONG. Need to find a way to translate only data in msgstr
 $data = file_get_contents('po/'. $LOCALE .'.po');
-$data = preg_replace_callback('#\\\\(application|menu|button|checkbox|tab|dropdown|window|textfield)\{([^\{]+?)\}#', 'po4local_replace', $data);
-rename('po/'. $LOCALE .'.po', 'po/'. $LOCALE .'.bak.po');
-file_put_contents('po/'. $LOCALE .'.po', $data);
+$data = preg_replace_callback('#^msgstr .+?(?=\n\n)#ms', 'po4locale_match', $data);
+file_put_contents('po/'. $LOCALE .'-new.po', $data);
 
-printf("%d strings, %d KB used, %d title replaced.\n\n", $c, ($before - $after)/1024, po4local_item_replace());
+printf("%d strings, %d KB used, %d title replaced.\n\n", $c, ($before - $after)/1024, po4locale_item_replace());
 
 function parse_file($filename) {
   global $T;
@@ -65,13 +63,23 @@ function max_key($array) {
   }
 }
 
-function po4local_replace($match) {
+/**
+ * This function processes text matched in msgstr "..."
+ */
+function po4locale_match($match) {
+  return preg_replace_callback('#\\\\(application|menu|button|checkbox|tab|dropdown|window|textfield)\{([^\{]+?)\}#', 'po4locale_replace', $match[0]);  
+}
+
+/**
+ * Only useful in menu, split text by "\then"
+ */
+function po4locale_replace($match) {
   $data = explode('\\\\then', str_replace("\"\n\"", "", $match[2]));
   foreach ($data as $k => $text) {
-    $data[$k] = po4local_item_replace(trim($text));
+    $data[$k] = po4locale_item_replace(trim($text));
   }
   
-  $output = '\\'. $match[1] .'{'. implode('\\\\then ', $data) .'}';
+  $output = '\\'. $match[1] .'{'. implode(' \\\\then ', $data) .'}';
   if ($output != $match[0]) {
     printf("Replace %s by %s\n", $match[0], $output);
   }
@@ -79,7 +87,10 @@ function po4local_replace($match) {
   return $output;
 }
 
-function po4local_item_replace($source = NULL) {
+/**
+ * Search and replace exact matches
+ */
+function po4locale_item_replace($source = NULL) {
   static $total = 0;
   global $T2;
   
